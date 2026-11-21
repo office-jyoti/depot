@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dépôt de documents – JYOTI</title>
+<meta name="description" content="Envoyez vos tickets, reçus et factures hors Peppol à JYOTI en toute sécurité, en une photo.">
+<meta name="robots" content="noindex">
+
+<!-- Vignette WhatsApp / Messenger / LinkedIn / e-mail -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="JYOTI – Just Your Office Tasks & Invoices">
+<meta property="og:title" content="Dépôt de documents – JYOTI">
+<meta property="og:description" content="Envoyez vos tickets, reçus et factures hors Peppol en toute sécurité, en une photo.">
+<meta property="og:url" content="https://depot.jyoti.live/">
+<meta property="og:image" content="https://depot.jyoti.live/og-image.jpg">
+<meta property="og:image:width" content="800">
+<meta property="og:image:height" content="420">
+<meta property="og:locale" content="fr_BE">
+<meta name="twitter:card" content="summary_large_image">
+
+<style>
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#FCFCFA;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#12223C;text-align:center}
+  a{color:#1FB5AD;font-weight:600}
+</style>
+<script>
+  // Page de dépôt (Google Apps Script). Le code client (?k=...) est transmis tel quel.
+  var CIBLE = 'https://script.google.com/macros/s/AKfycbwqFxhZAI8971mZjaaTY8BtRf_ExMxTFC6fVkry8kK3fI69X_O0ji7M0aBcYcLAikh9vA/exec';
+  location.replace(CIBLE + location.search);
+</script>
+</head>
+<body>
+  <p>Ouverture de votre espace de dépôt…<br><br>
+  <noscript>Activez JavaScript ou </noscript><a id="lien" href="https://script.google.com/macros/s/AKfycbwqFxhZAI8971mZjaaTY8BtRf_ExMxTFC6fVkry8kK3fI69X_O0ji7M0aBcYcLAikh9vA/exec">cliquez ici</a> si rien ne se passe.</p>
+  <script>document.getElementById('lien').href = CIBLE + location.search;</script>
+</body>
+</html>
