@@ -6,8 +6,6 @@
 <title>Dépôt de documents – JYOTI</title>
 <meta name="description" content="Envoyez vos tickets, reçus et factures hors Peppol à JYOTI en toute sécurité, en une photo.">
 <meta name="robots" content="noindex">
-
-<!-- Vignette WhatsApp / Messenger / LinkedIn / e-mail -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="JYOTI – Just Your Office Tasks & Invoices">
 <meta property="og:title" content="Dépôt de documents – JYOTI">
@@ -18,20 +16,139 @@
 <meta property="og:image:height" content="420">
 <meta property="og:locale" content="fr_BE">
 <meta name="twitter:card" content="summary_large_image">
-
 <style>
-  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#FCFCFA;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#12223C;text-align:center}
-  a{color:#1FB5AD;font-weight:600}
+  :root { --nuit:#12223C; --turq:#1FB5AD; --or:#C9A35B; --fond:#F4F7FA; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:var(--fond); color:var(--nuit); }
+  header { background:var(--nuit); color:#fff; padding:22px 20px 18px; text-align:center; }
+  header h1 { margin:0; font-size:26px; letter-spacing:4px; }
+  header h1 span { color:var(--or); }
+  header p { margin:6px 0 0; font-size:13px; color:#cfd8e3; }
+  main { max-width:520px; margin:0 auto; padding:20px; }
+  .card { background:#fff; border-radius:14px; padding:20px; box-shadow:0 2px 10px rgba(18,34,60,.08); }
+  h2 { font-size:18px; margin:0 0 4px; }
+  .muted { color:#5b6b80; font-size:14px; margin:0 0 18px; }
+  label { display:block; font-weight:600; font-size:14px; margin:16px 0 6px; }
+  select, textarea { width:100%; padding:11px; border:1px solid #cfd8e3; border-radius:10px; font-size:15px; font-family:inherit; background:#fff; }
+  textarea { min-height:70px; resize:vertical; }
+  .drop { border:2px dashed var(--turq); border-radius:12px; padding:22px 12px; text-align:center; cursor:pointer; background:#f0fbfa; }
+  .drop strong { color:var(--turq); }
+  #list { margin:10px 0 0; padding:0; list-style:none; font-size:14px; }
+  #list li { padding:6px 0; border-bottom:1px solid #eef2f6; }
+  button { width:100%; margin-top:20px; padding:14px; border:0; border-radius:10px; background:var(--turq); color:#fff; font-size:16px; font-weight:700; cursor:pointer; }
+  button:disabled { background:#9fb3c4; cursor:wait; }
+  .msg { margin-top:16px; padding:12px; border-radius:10px; font-size:14px; display:none; }
+  .ok { background:#e6f7ef; color:#13643f; display:block; }
+  .err { background:#fdecec; color:#9b1c1c; display:block; }
+  .hidden { display:none; }
+  footer { text-align:center; font-size:12px; color:#7a8899; padding:18px; }
 </style>
-<script>
-  // Page de dépôt (Google Apps Script). Le code client (?k=...) est transmis tel quel.
-  var CIBLE = 'https://script.google.com/macros/s/AKfycbwqFxhZAI8971mZjaaTY8BtRf_ExMxTFC6fVkry8kK3fI69X_O0ji7M0aBcYcLAikh9vA/exec';
-  location.replace(CIBLE + location.search);
-</script>
 </head>
 <body>
-  <p>Ouverture de votre espace de dépôt…<br><br>
-  <noscript>Activez JavaScript ou </noscript><a id="lien" href="https://script.google.com/macros/s/AKfycbwqFxhZAI8971mZjaaTY8BtRf_ExMxTFC6fVkry8kK3fI69X_O0ji7M0aBcYcLAikh9vA/exec">cliquez ici</a> si rien ne se passe.</p>
-  <script>document.getElementById('lien').href = CIBLE + location.search;</script>
+<header>
+  <h1>J<span>Y</span>OTI</h1>
+  <p>Just Your Office Tasks &amp; Invoices</p>
+</header>
+
+<main>
+  <div class="card" id="loading"><p class="muted" style="margin:0">Chargement de votre espace…</p></div>
+
+  <div class="card hidden" id="invalid">
+    <h2>Lien non valide</h2>
+    <p class="muted">Ce lien est incorrect ou n'est plus actif. Contactez-moi à contact@jyoti.live pour recevoir votre lien personnel.</p>
+  </div>
+
+  <div class="card hidden" id="app">
+    <h2 id="hello">Bonjour 👋</h2>
+    <p class="muted">Envoyez ici vos tickets, reçus et factures qui ne sont pas arrivés via Peppol. Une photo nette suffit.</p>
+
+    <label for="type">Type de document</label>
+    <select id="type"></select>
+
+    <label>Fichiers (photo ou PDF)</label>
+    <div class="drop" id="drop">📷 <strong>Prendre une photo</strong> ou choisir des fichiers</div>
+    <input type="file" id="files" accept="image/*,application/pdf" multiple hidden>
+    <ul id="list"></ul>
+
+    <label for="comment">Commentaire (facultatif)</label>
+    <textarea id="comment" placeholder="Ex. : resto client Dupont, payé carte pro"></textarea>
+
+    <button id="send">Envoyer</button>
+    <div class="msg" id="msg"></div>
+  </div>
+</main>
+<footer>Vos documents sont transmis directement et uniquement à JYOTI.</footer>
+
+<script>
+(function () {
+  var API = 'https://script.google.com/macros/s/AKfycbwqFxhZAI8971mZjaaTY8BtRf_ExMxTFC6fVkry8kK3fI69X_O0ji7M0aBcYcLAikh9vA/exec';
+  var K = new URLSearchParams(location.search).get('k') || '';
+  var MAX = 15;
+  var $ = function (id) { return document.getElementById(id); };
+  function show(id) { ['loading', 'invalid', 'app'].forEach(function (x) { $(x).classList.toggle('hidden', x !== id); }); }
+  function say(text, ok) { $('msg').textContent = text; $('msg').className = 'msg ' + (ok ? 'ok' : 'err'); }
+
+  if (!/^[a-z0-9]{6,20}$/i.test(K)) { show('invalid'); return; }
+
+  fetch(API + '?api=client&k=' + encodeURIComponent(K), { credentials: 'omit' })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (!d.ok) { show('invalid'); return; }
+      MAX = d.maxMb || 15;
+      $('hello').textContent = 'Bonjour ' + d.name + ' 👋';
+      d.types.forEach(function (t) { var o = document.createElement('option'); o.textContent = t; $('type').appendChild(o); });
+      show('app');
+    })
+    .catch(function () {
+      show('invalid');
+      $('invalid').querySelector('p').textContent = 'Connexion impossible pour le moment. Vérifiez votre connexion internet puis rechargez la page.';
+    });
+
+  $('drop').onclick = function () { $('files').click(); };
+  $('files').onchange = function () {
+    $('list').innerHTML = '';
+    Array.prototype.forEach.call($('files').files, function (f) {
+      var li = document.createElement('li');
+      li.textContent = '📄 ' + f.name + ' (' + (f.size / 1048576).toFixed(1) + ' Mo)';
+      $('list').appendChild(li);
+    });
+  };
+
+  function read(f) {
+    return new Promise(function (res, rej) {
+      var r = new FileReader();
+      r.onload = function () { res({ name: f.name, mimeType: f.type, data: String(r.result).split(',')[1] }); };
+      r.onerror = rej;
+      r.readAsDataURL(f);
+    });
+  }
+
+  $('send').onclick = function () {
+    var files = Array.prototype.slice.call($('files').files);
+    if (!files.length) { say('Ajoutez au moins un fichier.', false); return; }
+    var big = files.filter(function (f) { return f.size > MAX * 1048576; });
+    if (big.length) { say('"' + big[0].name + '" dépasse ' + MAX + ' Mo.', false); return; }
+
+    var btn = $('send');
+    btn.disabled = true; btn.textContent = 'Envoi en cours…'; $('msg').className = 'msg';
+    Promise.all(files.map(read))
+      .then(function (payload) {
+        return fetch(API, {
+          method: 'POST', credentials: 'omit',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ k: K, type: $('type').value, comment: $('comment').value, files: payload })
+        });
+      })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.ok) throw new Error(d.error || 'Erreur inconnue');
+        say('Merci ! ' + d.count + ' document(s) bien reçu(s) ✔', true);
+        $('files').value = ''; $('list').innerHTML = ''; $('comment').value = '';
+      })
+      .catch(function (e) { say('Erreur : ' + e.message + '. Réessayez dans un instant.', false); })
+      .then(function () { btn.disabled = false; btn.textContent = 'Envoyer'; });
+  };
+})();
+</script>
 </body>
 </html>
