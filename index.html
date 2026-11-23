@@ -3,9 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data: blob:; connect-src https://jyoti-depot.fitwith.workers.dev; base-uri 'none'; form-action 'none'">
 <title>Dépôt de documents – JYOTI</title>
 <meta name="description" content="Envoyez vos tickets, reçus et factures hors Peppol à JYOTI en toute sécurité, en une photo.">
-<meta name="robots" content="noindex">
+<meta name="robots" content="noindex, nofollow">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="JYOTI – Just Your Office Tasks & Invoices">
 <meta property="og:title" content="Dépôt de documents – JYOTI">
@@ -33,15 +35,16 @@
   textarea { min-height:70px; resize:vertical; }
   .drop { border:2px dashed var(--turq); border-radius:12px; padding:22px 12px; text-align:center; cursor:pointer; background:#f0fbfa; }
   .drop strong { color:var(--turq); }
-  #list { margin:10px 0 0; padding:0; list-style:none; font-size:14px; }
-  #list li { padding:6px 0; border-bottom:1px solid #eef2f6; }
+  ul.list { margin:10px 0 0; padding:0; list-style:none; font-size:14px; }
+  ul.list li { padding:7px 0; border-bottom:1px solid #eef2f6; }
+  ul.list small { color:#5b6b80; }
   button { width:100%; margin-top:20px; padding:14px; border:0; border-radius:10px; background:var(--turq); color:#fff; font-size:16px; font-weight:700; cursor:pointer; }
   button:disabled { background:#9fb3c4; cursor:wait; }
   .msg { margin-top:16px; padding:12px; border-radius:10px; font-size:14px; display:none; }
   .ok { background:#e6f7ef; color:#13643f; display:block; }
   .err { background:#fdecec; color:#9b1c1c; display:block; }
   .hidden { display:none; }
-  footer { text-align:center; font-size:12px; color:#7a8899; padding:18px; }
+  footer { text-align:center; font-size:12px; color:#7a8899; padding:18px; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -60,41 +63,49 @@
 
   <div class="card hidden" id="app">
     <h2 id="hello">Bonjour 👋</h2>
-    <p class="muted">Envoyez ici vos tickets, reçus et factures qui ne sont pas arrivés via Peppol. Une photo nette suffit.</p>
+    <p class="muted">Envoyez ici vos tickets, reçus et factures qui ne sont pas arrivés via Peppol. Une photo nette, bien à plat, suffit.</p>
 
     <label for="type">Type de document</label>
     <select id="type"></select>
 
     <label>Fichiers (photo ou PDF)</label>
-    <div class="drop" id="drop">📷 <strong>Prendre une photo</strong> ou choisir des fichiers</div>
+    <div class="drop" id="drop" role="button" tabindex="0">📷 <strong>Prendre une photo</strong> ou choisir des fichiers</div>
     <input type="file" id="files" accept="image/*,application/pdf" multiple hidden>
-    <ul id="list"></ul>
+    <ul class="list" id="list"></ul>
 
     <label for="comment">Commentaire (facultatif)</label>
-    <textarea id="comment" placeholder="Ex. : resto client Dupont, payé carte pro"></textarea>
+    <textarea id="comment" maxlength="500" placeholder="Ex. : resto client Dupont, payé carte pro"></textarea>
 
     <button id="send">Envoyer</button>
     <div class="msg" id="msg"></div>
+    <ul class="list" id="results"></ul>
   </div>
 </main>
-<footer>Vos documents sont transmis directement et uniquement à JYOTI.</footer>
+<footer>Vos documents sont transmis de façon chiffrée, directement dans votre comptabilité Odoo,<br>et lus automatiquement pour en extraire les montants. Ils ne sont stockés nulle part ailleurs.</footer>
 
 <script>
 (function () {
-  var API = 'https://script.google.com/macros/s/AKfycbwqFxhZAI8971mZjaaTY8BtRf_ExMxTFC6fVkry8kK3fI69X_O0ji7M0aBcYcLAikh9vA/exec';
+  'use strict';
+  var API = 'https://jyoti-depot.fitwith.workers.dev';
   var K = new URLSearchParams(location.search).get('k') || '';
-  var MAX = 15;
+  var MAX_MB = 10, MAX_FILES = 10, MAX_SIDE = 2000, QUALITY = 0.82;
   var $ = function (id) { return document.getElementById(id); };
   function show(id) { ['loading', 'invalid', 'app'].forEach(function (x) { $(x).classList.toggle('hidden', x !== id); }); }
-  function say(text, ok) { $('msg').textContent = text; $('msg').className = 'msg ' + (ok ? 'ok' : 'err'); }
+  function say(t, ok) { $('msg').textContent = t; $('msg').className = 'msg ' + (ok ? 'ok' : 'err'); }
+  function li(parent, text, sub) {
+    var e = document.createElement('li'); e.textContent = text;
+    if (sub) { var s = document.createElement('small'); s.textContent = ' — ' + sub; e.appendChild(s); }
+    parent.appendChild(e);
+  }
 
-  if (!/^[a-z0-9]{6,20}$/i.test(K)) { show('invalid'); return; }
+  // Le code ne doit pas rester visible dans l'historique ni être transmis à d'autres sites
+  if (!/^[A-Za-z0-9]{20,64}$/.test(K)) { show('invalid'); return; }
 
-  fetch(API + '?api=client&k=' + encodeURIComponent(K), { credentials: 'omit' })
+  fetch(API + '/client?k=' + encodeURIComponent(K), { credentials: 'omit', referrerPolicy: 'no-referrer', cache: 'no-store' })
     .then(function (r) { return r.json(); })
     .then(function (d) {
       if (!d.ok) { show('invalid'); return; }
-      MAX = d.maxMb || 15;
+      MAX_MB = d.maxMb || MAX_MB; MAX_FILES = d.maxFiles || MAX_FILES;
       $('hello').textContent = 'Bonjour ' + d.name + ' 👋';
       d.types.forEach(function (t) { var o = document.createElement('option'); o.textContent = t; $('type').appendChild(o); });
       show('app');
@@ -105,48 +116,54 @@
     });
 
   $('drop').onclick = function () { $('files').click(); };
+  $('drop').onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') $('files').click(); };
   $('files').onchange = function () {
-    $('list').innerHTML = '';
-    Array.prototype.forEach.call($('files').files, function (f) {
-      var li = document.createElement('li');
-      li.textContent = '📄 ' + f.name + ' (' + (f.size / 1048576).toFixed(1) + ' Mo)';
-      $('list').appendChild(li);
-    });
+    $('list').innerHTML = ''; $('results').innerHTML = ''; $('msg').className = 'msg';
+    Array.prototype.forEach.call($('files').files, function (f) { li($('list'), '📄 ' + f.name, (f.size / 1048576).toFixed(1) + ' Mo'); });
   };
 
-  function read(f) {
-    return new Promise(function (res, rej) {
-      var r = new FileReader();
-      r.onload = function () { res({ name: f.name, mimeType: f.type, data: String(r.result).split(',')[1] }); };
-      r.onerror = rej;
-      r.readAsDataURL(f);
-    });
+  /* Réduit les photos (≈2000 px, JPEG) : envoi rapide, lisible par l'IA,
+     et suppression des métadonnées (position GPS, appareil…). Les PDF passent tels quels. */
+  function compress(file) {
+    if (!/^image\//.test(file.type)) return Promise.resolve(file);
+    return createImageBitmap(file, { imageOrientation: 'from-image' }).then(function (img) {
+      var s = Math.min(1, MAX_SIDE / Math.max(img.width, img.height));
+      var c = document.createElement('canvas');
+      c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+      var ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+      ctx.drawImage(img, 0, 0, c.width, c.height);
+      return new Promise(function (res) {
+        c.toBlob(function (b) { res(new File([b], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' })); }, 'image/jpeg', QUALITY);
+      });
+    }).catch(function () { return file; }); // format non lisible par le navigateur : envoyé tel quel, le serveur tranchera
   }
 
   $('send').onclick = function () {
     var files = Array.prototype.slice.call($('files').files);
     if (!files.length) { say('Ajoutez au moins un fichier.', false); return; }
-    var big = files.filter(function (f) { return f.size > MAX * 1048576; });
-    if (big.length) { say('"' + big[0].name + '" dépasse ' + MAX + ' Mo.', false); return; }
+    if (files.length > MAX_FILES) { say('Maximum ' + MAX_FILES + ' fichiers par envoi.', false); return; }
 
     var btn = $('send');
-    btn.disabled = true; btn.textContent = 'Envoi en cours…'; $('msg').className = 'msg';
-    Promise.all(files.map(read))
-      .then(function (payload) {
-        return fetch(API, {
-          method: 'POST', credentials: 'omit',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ k: K, type: $('type').value, comment: $('comment').value, files: payload })
-        });
-      })
-      .then(function (r) { return r.json(); })
-      .then(function (d) {
-        if (!d.ok) throw new Error(d.error || 'Erreur inconnue');
-        say('Merci ! ' + d.count + ' document(s) bien reçu(s) ✔', true);
-        $('files').value = ''; $('list').innerHTML = ''; $('comment').value = '';
-      })
-      .catch(function (e) { say('Erreur : ' + e.message + '. Réessayez dans un instant.', false); })
-      .then(function () { btn.disabled = false; btn.textContent = 'Envoyer'; });
+    btn.disabled = true; btn.textContent = 'Préparation…'; $('msg').className = 'msg'; $('results').innerHTML = '';
+
+    Promise.all(files.map(compress)).then(function (ready) {
+      var big = ready.filter(function (f) { return f.size > MAX_MB * 1048576; });
+      if (big.length) throw new Error('"' + big[0].name + '" dépasse ' + MAX_MB + ' Mo');
+      var fd = new FormData();
+      fd.append('k', K); fd.append('type', $('type').value); fd.append('comment', $('comment').value);
+      ready.forEach(function (f) { fd.append('files', f, f.name); });
+      btn.textContent = 'Envoi et lecture en cours…';
+      return fetch(API + '/upload', { method: 'POST', body: fd, credentials: 'omit', referrerPolicy: 'no-referrer' });
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (!d.ok) throw new Error(d.error || 'Erreur inconnue');
+      (d.results || []).forEach(function (x) { li($('results'), (x.ok ? '✔ ' : '✖ ') + x.file, x.resume ? x.resume + ' · ' + x.status : x.status); });
+      say('Merci ! ' + d.count + ' document(s) bien reçu(s).', d.count > 0);
+      $('files').value = ''; $('list').innerHTML = ''; $('comment').value = '';
+    })
+    .catch(function (e) { say('Erreur : ' + e.message + '. Réessayez dans un instant.', false); })
+    .then(function () { btn.disabled = false; btn.textContent = 'Envoyer'; });
   };
 })();
 </script>
