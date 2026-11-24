@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta name="robots" content="noindex">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Suivi Nawelle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: coach bienveillante, claire, encourageante
+   IDEA: le carnet d'entraînement papier de Fit With Jyoti, devenu poche
+   PICTURE: la séance du jour elle-même, en cartes à remplir, chrono intégré
+   COLOUR and TYPE: blanc + rose Fit With Jyoti, Poppins
+   LAYOUT: une colonne, onglets de séance en haut, bouton Enregistrer collant en bas */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#1a1216);--card:light-dark(#fff7fa,#26191f);--ink:light-dark(#2b2226,#f6edf1);--mute:light-dark(#76666d,#bfaab3);--pink:light-dark(#e0457f,#ff7aa8);--soft:light-dark(#fde8f0,#3a2029);--line:light-dark(#f3cfdc,#4a2c37);--on:#fff}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Poppins,system-ui,sans-serif;overflow-x:clip}
+header{padding:20px max(5vw,16px) 8px;max-width:760px;margin:auto}
+.brand{color:var(--pink);font-weight:600;font-size:13px}
+h1{font-size:30px;line-height:1.1;margin:4px 0 4px}
+.sub{color:var(--mute);font-size:14px;margin:0}
+nav{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:10px max(5vw,16px);max-width:760px;margin:auto}
+.tabs button{flex:none;border:1px solid var(--line);background:transparent;color:var(--ink);font:500 14px Poppins;padding:10px 14px;border-radius:999px;min-height:44px;cursor:pointer}
+.tabs button[aria-selected=true]{background:var(--pink);border-color:var(--pink);color:var(--on)}
+main{max-width:760px;margin:auto;padding:14px max(5vw,16px) 120px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+label.f{font-size:13px;color:var(--mute);display:grid;gap:4px}
+input,textarea,select{font:16px Poppins;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 10px;min-height:44px;width:100%}
+input:focus,textarea:focus,button:focus-visible{outline:2px solid var(--pink);outline-offset:1px}
+textarea{min-height:60px;resize:vertical}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin:12px 0}
+.card h3{margin:0;font-size:17px}
+.target{font-size:13px;color:var(--pink);font-weight:500;margin:2px 0}
+.last{font-size:13px;color:var(--mute);margin:0 0 10px}
+.tip{font-size:13px;color:var(--mute);margin:6px 0 0}
+.sets{display:grid;grid-template-columns:28px minmax(0,1fr) minmax(0,1fr);gap:6px 8px;align-items:center}
+.sets .n{font-weight:600;color:var(--pink);text-align:center}
+.sets .h{font-size:12px;color:var(--mute)}
+.rpe{display:flex;gap:4px;flex-wrap:wrap;margin-top:10px}
+.rpe span{font-size:13px;color:var(--mute);width:100%}
+.rpe button{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:500 14px Poppins;cursor:pointer}
+.rpe button.on{background:var(--pink);color:var(--on);border-color:var(--pink)}
+.chrono{display:flex;align-items:center;gap:8px}
+.chrono output{font:600 18px Poppins;min-width:64px;font-variant-numeric:tabular-nums}
+.btn{border:0;background:var(--pink);color:var(--on);font:600 15px Poppins;padding:12px 18px;border-radius:12px;min-height:44px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--pink);border:1px solid var(--pink)}
+.btn.small{padding:8px 12px;font-size:13px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:1px solid var(--line);padding:10px max(5vw,16px) calc(10px + env(safe-area-inset-bottom))}
+.bar .in{max-width:760px;margin:auto;display:flex;gap:8px;align-items:center;justify-content:space-between}
+.msg{font-size:13px;color:var(--mute)}
+.hist .card h3{font-size:15px}
+.hist ul{margin:6px 0 0;padding-left:18px;font-size:14px}
+.hist li{margin:3px 0}
+.hist .rem{color:var(--mute)}
+.chip{display:inline-block;font-size:12px;background:var(--soft);color:var(--pink);border-radius:999px;padding:2px 10px;font-weight:600}
+.sync{font-size:12px;color:var(--mute);margin-top:6px}
+.empty{color:var(--mute);text-align:center;padding:30px 0}
+dialog{border:0;border-radius:16px;background:var(--bg);color:var(--ink);max-width:min(560px,92vw);padding:18px}
+dialog::backdrop{background:#0006}
+dialog pre{white-space:pre-wrap;font:14px/1.5 Poppins;background:var(--card);padding:12px;border-radius:12px;max-height:55vh;overflow:auto}
+@media (prefers-reduced-motion:no-preference){.card{transition:border-color .2s}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Fit With Jyoti</div>
+  <h1>Ton suivi, Nawelle</h1>
+  <p class="sub">Note tes charges, tes reps et ton ressenti à chaque séance. Après chaque séance, envoie ton récap à Jyoti sur WhatsApp.</p>
+  <div class="sync" id="sync">Tes séances sont gardées sur ce téléphone.</div>
+</header>
+<nav><div class="tabs" role="tablist" id="tabs"></div></nav>
+<main id="main"></main>
+<div class="bar" id="bar"><div class="in">
+  <div class="row" style="gap:8px;flex-wrap:nowrap"><label class="f" style="width:150px">Date<input type="date" id="date"></label></div>
+  <button class="btn" id="save">Enregistrer la séance</button>
+</div></div>
+<dialog id="dlg"><h3 style="margin-top:0">Récap à envoyer à Jyoti</h3><pre id="recap"></pre><div class="row"><a class="btn" id="wa" href="https://wa.me/" target="_blank" rel="noopener" style="text-decoration:none">Envoyer sur WhatsApp</a><button class="btn ghost" id="copy">Copier</button><button class="btn ghost" id="close">Fermer</button><span class="msg" id="copied"></span></div></dialog>
+
+<script>
+{
+const PROG={
+ A:{name:'A · Dos & jambes',ex:[
+  {id:'tv',n:'Tirage vertical',k:'sets',s:3,t:'3 × 7 à 39 kg · +1 rep par séance jusqu’à 3 × 10, puis + charge',tip:'Poitrine sortie, barre jusque sous le menton, remonte lentement.'},
+  {id:'sp',n:'Scapula pull',k:'sets',s:3,t:'3 × 8, tenir 2 s en haut',tip:'Bras tendus, seules les omoplates bougent. Sangles si les mains font mal.'},
+  {id:'th',n:'Tirage horizontal diverging',k:'sets',s:3,t:'3 × 7 à 39 kg · +1 rep par séance jusqu’à 3 × 10, puis + charge',tip:'Coudes vers l’arrière, serre les omoplates 1 s. Sangles autorisées.'},
+  {id:'pr',n:'Presse à jambes',k:'sets',s:3,t:'3 × 7 · charge validée avec Jyoti · +1 rep par séance',tip:'Genoux dans l’axe des pieds, pas de verrouillage en haut.'},
+  {id:'ht',n:'Hip thrust',k:'sets',s:3,t:'3 × 7 · charge validée avec Jyoti · +1 rep par séance',tip:'Extension complète de hanche, rétroversion, serre 2 s.'}]},
+ B:{name:'B · Full body & cardio',ex:[
+  {id:'cp',n:'Chest press',k:'sets',s:3,t:'3 × 15 à 11 kg, mains verticales',tip:'Omoplates collées au dossier, épaules basses.'},
+  {id:'cb',n:'Curl biceps',k:'sets',s:3,t:'3 × 15 à 9 kg',tip:'Coudes fixes, mouvement lent.'},
+  {id:'tr',n:'Extension triceps',k:'sets',s:3,t:'3 × 15 à 9 kg',tip:'Coudes collés au corps, seuls les avant-bras bougent.'},
+  {id:'gs',n:'Goblet squat',k:'sets',s:3,t:'3 × 10 à 12 kg, talons surélevés',tip:'Poids contre la poitrine, descends seulement tant que le dos reste droit.'},
+  {id:'ad',n:'Adducteurs',k:'sets',s:3,t:'3 × 15 à 32 kg (+ si facile)',tip:'Amplitude contrôlée, sans à-coups.'},
+  {id:'ab',n:'Abducteurs',k:'sets',s:3,t:'3 × 15 à 32 kg',tip:'Note si un côté fait plus mal.'},
+  {id:'tp',n:'Tapis incliné 8,5 %',k:'cardio',t:'10 min · alterner 2 min à 5,5 et 1 min à 4,5 km/h',tip:'Ne tiens pas les barres. Étire les mollets après.'}]},
+ C:{name:'C · Haut du corps',ex:[
+  {id:'rd',n:'Rear delt',k:'sets',s:4,t:'4 × 15, charge légère',tip:'Poitrine contre le coussin, épaules basses.'},
+  {id:'pf',n:'Pec fly',k:'sets',s:3,t:'3 × 12, charge légère',tip:'Retour lent.'},
+  {id:'cp2',n:'Chest press',k:'sets',s:3,t:'3 × 12 à 11 kg',tip:'Omoplates collées au dossier.'},
+  {id:'dc',n:'Développé couché barre',k:'sets',s:3,t:'3 × 10, barre seule · jamais seule',tip:'Avec Jyoti ou un partenaire.'},
+  {id:'rdf',n:'Rear delt – finisher',k:'sets',s:2,t:'2 × 20, plus léger',tip:'Lent et contrôlé.'},
+  {id:'tvo',n:'Tirage vertical ouverture thoracique',k:'sets',s:3,t:'3 × 12 à 32 kg',tip:'Poitrine haute vers la barre, omoplates basses.'}]},
+ G:{name:'Gainage',ex:[
+  {id:'pv',n:'Planche ventrale',k:'time',s:2,t:'2 × 1 min',tip:'Nombril rentré, fessiers serrés, bas du dos plat.'},
+  {id:'pd',n:'Planche latérale droite',k:'time',s:2,t:'2 × 1 min',tip:'Hanche haute, corps aligné.'},
+  {id:'pg',n:'Planche latérale gauche',k:'time',s:2,t:'2 × 1 min',tip:'La hanche ne tombe pas.'},
+  {id:'sm',n:'Superman',k:'time',s:2,t:'2 × 1 min',tip:'10 ponts fessiers avant pour éviter la crampe.'},
+  {id:'pf2',n:'Pont fessier',k:'sets',s:2,t:'2 × 15, léger ou 26 kg',tip:'Rétroversion, serre 2 s en haut.'}]},
+ L:{name:'Activité libre',ex:[
+  {id:'lib',n:'Marche, vélo, jogging ou circuit',k:'cardio',t:'Les jours sans salle',tip:'Note le type d’activité dans la remarque.'}]}
+};
+// Historique de départ (retours envoyés à Jyoti du 9 au 24/11)
+const START=[];
+const HORS='';
+const LS='nawelle-suivi-v1';
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtD=d=>{try{return new Date(d+'T12:00').toLocaleDateString('fr-BE',{weekday:'short',day:'numeric',month:'short'})}catch(e){return d}};
+const fmtS=s=>s>=60?`${Math.floor(s/60)} min ${String(s%60).padStart(2,'0')}`:`${s} s`;
+const today=()=>new Date().toISOString().slice(0,10);
+let local=[];try{local=JSON.parse(localStorage.getItem(LS)||'[]')}catch(e){}
+let remote=[];let db=null;let tab='A';let draft={};
+const all=()=>{const m=new Map();[...START,...local,...remote].forEach(s=>m.set(s.id,s));return [...m.values()].sort((a,b)=>b.date.localeCompare(a.date)||String(b.created||'').localeCompare(String(a.created||'')))};
+const lastOf=id=>{for(const s of all()){const it=s.items&&s.items[id];if(it)return {s,it}}return null};
+const descr=(ex,it)=>{
+ if(ex.k==='time')return (it.secs||[]).filter(Boolean).map(fmtS).join(' / ');
+ if(ex.k==='cardio')return [it.min&&it.min+' min',it.kmh&&it.kmh+' km/h'].filter(Boolean).join(' · ');
+ return (it.sets||[]).filter(x=>x[0]!==''||x[1]!=='').map(x=>(x[0]!==''?x[0]+' kg × ':'')+x[1]).join(' · ');
+};
+const exById=id=>{for(const k in PROG)for(const e of PROG[k].ex)if(e.id===id)return e};
+
+function tabs(){
+ $('#tabs').innerHTML=[...Object.keys(PROG).map(k=>[k,k==='G'||k==='L'?PROG[k].name:'Séance '+k]),['H','Historique']]
+  .map(([k,l])=>`<button role="tab" data-t="${k}" aria-selected="${k===tab}">${l}</button>`).join('');
+}
+function render(){
+ tabs();
+ $('#bar').style.display=tab==='H'?'none':'';
+ if(tab==='H')return renderHist();
+ const p=PROG[tab];
+ $('#main').innerHTML=`<h2 style="font-size:22px;margin:4px 0">${p.name}</h2>`+p.ex.map(ex=>{
+  const l=lastOf(ex.id),d=draft[ex.id]||{};
+  const last=l?`Dernière fois (${fmtD(l.s.date)}) : ${esc(descr(ex,l.it))}${l.it.note?' — '+esc(l.it.note):''}`:'Pas encore fait';
+  let body='';
+  if(ex.k==='sets'){
+   body=`<div class="sets"><span></span><span class="h">Charge (kg)</span><span class="h">Reps</span>`+
+   Array.from({length:ex.s},(_,i)=>{const v=(d.sets||[])[i]||['',''];return `<span class="n">${i+1}</span><input inputmode="decimal" data-e="${ex.id}" data-i="${i}" data-f="0" value="${esc(v[0])}" aria-label="${esc(ex.n)} série ${i+1} charge"><input inputmode="numeric" data-e="${ex.id}" data-i="${i}" data-f="1" value="${esc(v[1])}" aria-label="${esc(ex.n)} série ${i+1} reps">`}).join('')+`</div>`;
+  }else if(ex.k==='time'){
+   body=Array.from({length:ex.s},(_,i)=>{const v=(d.secs||[])[i]||'';return `<div class="chrono" style="margin:6px 0"><span class="n" style="color:var(--pink);font-weight:600;width:20px">${i+1}</span><output id="o-${ex.id}-${i}">${v?fmtS(+v):'0 s'}</output><button class="btn small" data-c="${ex.id}" data-i="${i}">Démarrer</button><input inputmode="numeric" style="width:90px" data-e="${ex.id}" data-i="${i}" data-f="t" value="${esc(v)}" aria-label="secondes série ${i+1}" placeholder="sec"></div>`}).join('');
+  }else{
+   body=`<div class="row"><label class="f" style="flex:1">Minutes<input inputmode="decimal" data-e="${ex.id}" data-f="min" value="${esc(d.min||'')}"></label><label class="f" style="flex:1">Vitesse (km/h)<input data-e="${ex.id}" data-f="kmh" value="${esc(d.kmh||'')}"></label></div>`;
+  }
+  const r=d.rpe||0;
+  return `<div class="card"><h3>${esc(ex.n)}</h3><p class="target">${esc(ex.t)}</p><p class="last">${last}</p>${body}
+  <div class="rpe"><span>Ressenti (1 très facile · 10 impossible)</span>${Array.from({length:10},(_,i)=>`<button data-r="${ex.id}" data-v="${i+1}" class="${r===i+1?'on':''}" aria-label="ressenti ${i+1}">${i+1}</button>`).join('')}</div>
+  <label class="f" style="margin-top:10px">Ce que tu as senti<textarea data-e="${ex.id}" data-f="note" placeholder="Muscles sentis, douleur, difficulté…">${esc(d.note||'')}</textarea></label>
+  <p class="tip">${esc(ex.tip)}</p></div>`;
+ }).join('');
+}
+function renderHist(){
+ const list=all();
+ $('#main').innerHTML=`<h2 style="font-size:22px;margin:4px 0">Historique</h2><div class="hist">${HORS}`+(list.length?list.map(s=>{
+  const p=PROG[s.seance]||{name:s.seance};
+  const items=Object.entries(s.items||{}).map(([id,it])=>{const ex=exById(id);if(!ex)return '';return `<li><b>${esc(ex.n)}</b> : ${esc(descr(ex,it))}${it.rpe?` · ressenti ${esc(it.rpe)}/10`:''}${it.note?` <span class="rem">— ${esc(it.note)}</span>`:''}</li>`}).join('');
+  const mine=true;
+  return `<div class="card"><div class="row" style="justify-content:space-between"><h3>${esc(fmtD(s.date))} · ${esc(p.name)}</h3><span class="chip">${esc(s.seance)}</span></div><ul>${items}</ul>
+  <div class="row" style="margin-top:8px"><button class="btn small ghost" data-recap="${esc(s.id)}">Récap WhatsApp</button>${mine?`<button class="btn small ghost" data-del="${esc(s.id)}">Supprimer</button>`:''}</div></div>`;
+ }).join(''):'<p class="empty">Aucune séance pour l’instant.</p>')+`</div>`;
+}
+function recap(s){
+ const p=PROG[s.seance]||{name:s.seance};const dots=['🟠','🔵','🟢','🟣','🟡','🔴','🟤'];let i=0;
+ return `Séance ${p.name} – ${fmtD(s.date)}\n\n`+Object.entries(s.items||{}).map(([id,it])=>{const ex=exById(id);if(!ex)return '';
+  return `${dots[i++%dots.length]} ${ex.n} : ${descr(ex,it)}${it.rpe?` (ressenti ${it.rpe}/10)`:''}${it.note?`\n   ${it.note}`:''}`}).filter(Boolean).join('\n');
+}
+function showRecap(s){$('#recap').textContent=recap(s);$('#wa').href='https://wa.me/?text='+encodeURIComponent(recap(s));$('#copied').textContent='';$('#dlg').showModal()}
+
+const timers={};
+document.addEventListener('click',e=>{
+ const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.t){tab=b.dataset.t;render();window.scrollTo({top:0});return}
+ if(b.dataset.r){const d=draft[b.dataset.r]||(draft[b.dataset.r]={});d.rpe=+b.dataset.v;b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));return}
+ if(b.dataset.c){const key=b.dataset.c+'-'+b.dataset.i,o=$('#o-'+key),inp=b.nextElementSibling;
+  if(timers[key]){clearInterval(timers[key].h);const s=Math.round((Date.now()-timers[key].t0)/1000);delete timers[key];b.textContent='Démarrer';inp.value=s;setVal(b.dataset.c,b.dataset.i,'t',String(s));o.textContent=fmtS(s);}
+  else{const t0=Date.now();timers[key]={t0,h:setInterval(()=>{o.textContent=fmtS(Math.round((Date.now()-t0)/1000))},250)};b.textContent='Stop';}
+  return}
+ if(b.dataset.recap){const s=all().find(x=>x.id===b.dataset.recap);if(s)showRecap(s);return}
+ if(b.dataset.del){const id=b.dataset.del;if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Confirmer ?';return}
+  local=local.filter(x=>x.id!==id);remote=remote.filter(x=>x.id!==id);persist();renderHist();return}
+});
+function setVal(id,i,f,v){const d=draft[id]||(draft[id]={});
+ if(f==='0'||f==='1'){d.sets=d.sets||[];d.sets[i]=d.sets[i]||['',''];d.sets[i][+f]=v}
+ else if(f==='t'){d.secs=d.secs||[];d.secs[i]=v}
+ else d[f]=v;}
+document.addEventListener('input',e=>{const t=e.target;if(t.dataset.e)setVal(t.dataset.e,t.dataset.i,t.dataset.f,t.value)});
+const num=v=>{const n=parseFloat(String(v).replace(',','.'));return isNaN(n)?'':n};
+$('#save').addEventListener('click',()=>{
+ const p=PROG[tab];const items={};
+ for(const ex of p.ex){const d=draft[ex.id];if(!d)continue;const it={};
+  if(ex.k==='sets'){const s=(d.sets||[]).map(x=>x?[num(x[0]),num(x[1])]:['','']).filter(x=>x[1]!=='');if(s.length)it.sets=s}
+  else if(ex.k==='time'){const s=(d.secs||[]).map(num).filter(x=>x!=='');if(s.length)it.secs=s}
+  else{if(d.min)it.min=num(d.min);if(d.kmh)it.kmh=String(d.kmh).slice(0,30)}
+  if(d.rpe)it.rpe=d.rpe;if(d.note&&d.note.trim())it.note=d.note.trim().slice(0,500);
+  if(Object.keys(it).length)items[ex.id]=it}
+ if(!Object.keys(items).length){flash('Remplis au moins un exercice.');return}
+ const s={id:'u'+Date.now().toString(36),date:$('#date').value||today(),seance:tab,items,created:new Date().toISOString()};
+ local.push(s);persist();
+ flash('Séance enregistrée ✓ Envoie le récap à Jyoti.');
+ draft={};showRecap(s);render();
+});
+function persist(){try{localStorage.setItem(LS,JSON.stringify(local))}catch(e){}}
+function flash(m){$('#sync').textContent=m}
+$('#copy').addEventListener('click',()=>{navigator.clipboard.writeText($('#recap').textContent).then(()=>$('#copied').textContent='Copié, colle-le dans WhatsApp').catch(()=>$('#copied').textContent='Sélectionne le texte pour le copier')});
+$('#close').addEventListener('click',()=>$('#dlg').close());
+$('#date').value=today();
+render();
+
+}
+</script>
+</body>
+</html>
